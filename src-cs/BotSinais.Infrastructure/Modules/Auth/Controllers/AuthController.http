@@ -1,0 +1,160 @@
+# @name variables
+@base_url = https://localhost:7551
+@keycloak_url = http://localhost:8080
+@realm = botsignals
+@client_id = bot-signal-api
+@client_secret = LDehI9cDx8TsM93hgSsBayyhx1cXCUqv
+@jwt_token = ""
+### ===== AUTENTICAÇÃO BOT SINAIS =====
+
+### 1. 🏥 Status do Keycloak (Diagnóstico)
+GET {{base_url}}/api/auth/keycloak-status
+Accept: application/json
+
+### 2. ℹ️ Informações de Autenticação (Público)
+GET {{base_url}}/api/auth/info
+Accept: application/json
+
+### 3. 🔐 Autenticação Direta - Obter JWT Token
+# @name auth_request
+POST {{base_url}}/api/auth/authenticate
+Content-Type: application/json
+
+{
+  "username": "dev_keycloak_user",
+  "password": "dev_keycloak_password"
+}
+
+###
+// Captura automática do token JWT da resposta
+# Execute a requisição 'auth_request' antes desta linha para garantir que a resposta exista
+@jwt_token = {{auth_request.response.body.$.accessToken}}
+
+### 3B. 🔐 Teste Direto: Obter Token via Keycloak (ROPC)
+# @name keycloak_request
+POST {{keycloak_url}}/realms/{{realm}}/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id={{client_id}}&client_secret={{client_secret}}&username=dev_keycloak_user&password=dev_keycloak_password
+
+###
+// Captura automática do token do Keycloak
+@jwt_token_alt = {{keycloak_request.response.body.$.access_token}}
+
+### ===== TESTES DIRETOS NO KEYCLOAK =====
+
+### 4. 🔑 Teste Direto: Obter Token via Keycloak (ROPC)
+# @name keycloak_request
+POST {{keycloak_url}}/realms/{{realm}}/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id={{client_id}}&client_secret={{client_secret}}&username=dev_keycloak_user&password=dev_keycloak_password
+
+###
+// Captura automática do token do Keycloak
+@jwt_token_alt = {{keycloak_request.response.body.$.access_token}}
+
+### 6. 📋 Teste de Realm Info (Público)
+GET {{keycloak_url}}/realms/{{realm}}
+Accept: application/json
+
+### 7. 🔧 Well-known Configuration
+GET {{keycloak_url}}/realms/{{realm}}/.well-known/openid_configuration
+Accept: application/json
+
+### ===== VALIDAÇÃO DE TOKEN KEYCLOAK =====
+
+### 8A. 🔍 Validar Token via Keycloak (Token Introspection)
+POST {{keycloak_url}}/realms/{{realm}}/protocol/openid-connect/token/introspect
+Content-Type: application/x-www-form-urlencoded
+Authorization: Basic {{client_id}}:{{client_secret}}
+
+token={{jwt_token}}&token_type_hint=access_token
+
+### 8B. 🔍 Validar Token via Keycloak (Alternative com Client Auth)
+POST {{keycloak_url}}/realms/{{realm}}/protocol/openid-connect/token/introspect
+Content-Type: application/x-www-form-urlencoded
+
+token={{jwt_token}}&token_type_hint=access_token&client_id={{client_id}}&client_secret={{client_secret}}
+
+### 8C. 🔐 Obter Informações do Usuário via Keycloak UserInfo
+GET {{keycloak_url}}/realms/{{realm}}/protocol/openid-connect/userinfo
+Accept: application/json
+Authorization: Bearer {{jwt_token}}
+
+### ===== ENDPOINTS PROTEGIDOS (Requer JWT Token) =====
+
+### 9. ✅ Validar Token JWT (Nossa API)
+GET {{base_url}}/api/auth/validate
+Accept: application/json
+Authorization: Bearer {{jwt_token}}
+
+### 10. 👤 Obter Informações do Usuário (Nossa API)
+GET {{base_url}}/api/auth/me
+Accept: application/json
+Authorization: Bearer {{jwt_token}}
+
+### 11. 🚪 Logout Completo
+POST {{base_url}}/api/auth/logout
+Content-Type: application/json
+Authorization: Bearer {{jwt_token}}
+
+{
+  "postLogoutRedirectUri": "http://localhost:3000/"
+}
+
+### 12. 🚪 Logout Simples
+POST {{base_url}}/api/auth/logout
+Authorization: Bearer {{jwt_token}}
+
+### 13. 🚪 Logout via Keycloak (Revogação de Token)
+POST {{keycloak_url}}/realms/{{realm}}/protocol/openid-connect/logout
+Content-Type: application/x-www-form-urlencoded
+
+client_id={{client_id}}&client_secret={{client_secret}}&refresh_token={{jwt_token_alt}}
+
+### ===== TESTES DE CONECTIVIDADE =====
+
+### 14. 🌐 Teste de Conectividade - API Local
+GET {{base_url}}/health
+Accept: application/json
+
+### 15. 🌐 Teste de Conectividade - Keycloak
+GET {{keycloak_url}}/health
+Accept: application/json
+
+### ===== UTILITÁRIOS DE DEBUG =====
+
+### 16. 🔍 Debug: Verificar Token Atual (Nossa API)
+GET {{base_url}}/api/auth/validate
+Accept: application/json
+Authorization: Bearer {{jwt_token}}
+
+### 17. 🕒 Debug: Decodificar JWT (Verificar se token está válido)
+GET {{base_url}}/api/auth/me
+Accept: application/json
+Authorization: Bearer {{jwt_token}}
+
+### 18. 🔍 Debug: Introspecção de Token (Keycloak)
+POST {{keycloak_url}}/realms/{{realm}}/protocol/openid-connect/token/introspect
+Content-Type: application/x-www-form-urlencoded
+
+token={{jwt_token}}&token_type_hint=access_token&client_id={{client_id}}&client_secret={{client_secret}}
+
+### ===== FLUXO DE TRABALHO RECOMENDADO =====
+
+# 🎯 FLUXO PRINCIPAL DE USO:
+# 
+# 1️⃣ Primeiro execute: "Status do Keycloak" para verificar conectividade
+# 2️⃣ Execute: "Autenticação Direta" para obter JWT (token será salvo automaticamente)
+# 3️⃣ Teste validação: "Validar Token via Keycloak (Token Introspection)" 
+# 4️⃣ Teste endpoints protegidos: "Validar Token" e "Obter Informações do Usuário"
+# 5️⃣ Para finalizar: "Logout"
+#
+# 🔄 ALTERNATIVO - Teste direto no Keycloak:
+# Execute "Teste Direto: Obter Token via Keycloak" em vez do passo 2
+#
+# 🔍 VALIDAÇÃO DE TOKEN:
+# - Use "Token Introspection" (8A/8B) para validar se o token está ativo
+# - Use "UserInfo" (8C) para obter informações do usuário a partir do token
+# - Compare com nossa API (9/10) para verificar se a validação está funcionando

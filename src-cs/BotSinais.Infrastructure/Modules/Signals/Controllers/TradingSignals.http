@@ -1,0 +1,162 @@
+### Bot de Sinais - Trading Signals API Tests
+### Base URL para desenvolvimento
+@baseUrl = http://localhost:5557
+
+### ===========================================
+### 1. TESTE: Receber Dados de Mercado
+### ===========================================
+
+POST {{baseUrl}}/api/TradingSignals/market-data
+Content-Type: application/json
+
+{
+  "instrumentId": "123e4567-e89b-12d3-a456-426614174000",
+  "symbol": "BTCUSD",
+  "exchange": "BINANCE",
+  "open": 45000.50,
+  "high": 45500.75,
+  "low": 44800.25,
+  "close": 45200.00,
+  "volume": 1500000,
+  "timestamp": "2025-01-15T10:30:00Z",
+  "timeFrame": "M1"
+}
+
+### ===========================================
+### 2. TESTE: Gerar Sinal de Trading
+### ===========================================
+
+POST {{baseUrl}}/api/TradingSignals/generate-signal
+Content-Type: application/json
+
+{
+  "instrumentId": "123e4567-e89b-12d3-a456-426614174000",
+  "strategyId": "987fcdeb-51a2-43d1-b456-426614174999",
+  "direction": "Buy",
+  "entryPrice": 45200.00,
+  "stopLoss": 44500.00,
+  "takeProfit": 46000.00,
+  "confidence": 85.5
+}
+
+### ===========================================
+### 3. TESTE: Dados de Mercado - Crypto ETH
+### ===========================================
+
+POST {{baseUrl}}/api/TradingSignals/market-data
+Content-Type: application/json
+
+{
+  "instrumentId": "456e7890-e89b-12d3-a456-426614174001",
+  "symbol": "ETHUSD",
+  "exchange": "BINANCE",
+  "open": 2800.25,
+  "high": 2850.75,
+  "low": 2780.10,
+  "close": 2825.50,
+  "volume": 850000,
+  "timestamp": "2025-01-15T10:35:00Z",
+  "timeFrame": "M5"
+}
+
+### ===========================================
+### 4. TESTE: Sinal de Venda - Alta Confiança
+### ===========================================
+
+POST {{baseUrl}}/api/TradingSignals/generate-signal
+Content-Type: application/json
+
+{
+  "instrumentId": "456e7890-e89b-12d3-a456-426614174001",
+  "strategyId": "abc12345-51a2-43d1-b456-426614174888",
+  "direction": "Sell",
+  "entryPrice": 2825.50,
+  "stopLoss": 2880.00,
+  "takeProfit": 2750.00,
+  "confidence": 92.3
+}
+
+### ===========================================
+### 5. TESTE: Dados de Mercado - Forex
+### ===========================================
+
+POST {{baseUrl}}/api/TradingSignals/market-data
+Content-Type: application/json
+
+{
+  "instrumentId": "789e1234-e89b-12d3-a456-426614174002",
+  "symbol": "EURUSD",
+  "exchange": "FOREX",
+  "open": 1.0845,
+  "high": 1.0872,
+  "low": 1.0831,
+  "close": 1.0858,
+  "volume": 2500000,
+  "timestamp": "2025-01-15T10:40:00Z",
+  "timeFrame": "H1"
+}
+
+### ===========================================
+### 6. TESTE: Sinal Hold - Baixa Confiança
+### ===========================================
+
+POST {{baseUrl}}/api/TradingSignals/generate-signal
+Content-Type: application/json
+
+{
+  "instrumentId": "789e1234-e89b-12d3-a456-426614174002",
+  "strategyId": "def67890-51a2-43d1-b456-426614174777",
+  "direction": "Hold",
+  "entryPrice": 1.0858,
+  "stopLoss": null,
+  "takeProfit": null,
+  "confidence": 65.8
+}
+
+### ===========================================
+### 7. TESTE: Health Check (se disponível)
+### ===========================================
+
+GET {{baseUrl}}/weatherforecast
+
+### ===========================================
+### 8. TESTE: Swagger/OpenAPI (se disponível)
+### ===========================================
+
+GET {{baseUrl}}/swagger/index.html
+
+### ===========================================
+### Configurações de Ambiente
+### ===========================================
+
+### Para Produção, altere a baseUrl:
+# @baseUrl = https://api.botsinais.com
+
+### Para testes locais com HTTPS:
+# @baseUrl = https://localhost:7071
+
+### ===========================================
+### Notas dos Testes:
+### ===========================================
+
+### 1. Market Data Test:
+###    - Testa recebimento de dados OHLCV
+###    - Valida diferentes exchanges (BINANCE, FOREX)
+###    - Testa diferentes timeframes (M1, M5, H1)
+###    - Volume em formato long (inteiro)
+
+### 2. Signal Generation Test:
+###    - Testa diferentes direções (Buy, Sell, Hold)
+###    - Valida níveis de confiança variados
+###    - StopLoss e TakeProfit opcionais (null permitido)
+###    - Diferentes estratégias
+
+### 3. Respostas Esperadas:
+###    - 200 OK com EventId no corpo da resposta
+###    - Logs estruturados no console da aplicação
+###    - Eventos processados pelos handlers automaticamente
+
+### 4. Monitoramento:
+###    - Verificar logs no terminal da aplicação
+###    - EventIds únicos para rastreamento
+###    - Handlers processando eventos em background
