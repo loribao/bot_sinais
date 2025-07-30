@@ -1,4 +1,6 @@
-namespace BotSinais.Domain.Shared;
+using BotSinais.Domain.Shared.Entities;
+
+namespace BotSinais.Domain.Shared.Interfaces;
 
 /// <summary>
 /// Interface base para repositórios que seguem o padrão Repository

@@ -24,6 +24,7 @@ O Bot Sinais é um sistema modular para:
 - **[README.md](./arquitetura/README.md)** - Índice de documentação de arquitetura
 - **[ANALISE_PROJETO_ATUAL.md](./arquitetura/ANALISE_PROJETO_ATUAL.md)** - 📊 **Análise completa do estado atual**
 - **[CONFIGURACAO_CENTRALIZADA.md](./arquitetura/CONFIGURACAO_CENTRALIZADA.md)** - 🔧 **Padrão de configuração modular**
+- **[ORGANIZACAO_EVENTOS.md](./arquitetura/ORGANIZACAO_EVENTOS.md)** - 📝 **Organização de eventos em arquivos separados**
 - **[PROMPT_CONSTRUCAO_BOT.md](./arquitetura/PROMPT_CONSTRUCAO_BOT.md)** - Conceito e arquitetura original
 - **[MODULAR_REORGANIZATION_SUMMARY.md](./arquitetura/MODULAR_REORGANIZATION_SUMMARY.md)** - Reorganização modular DDD
 - **[RESTRUCTURE_SUMMARY.md](./arquitetura/RESTRUCTURE_SUMMARY.md)** - Resumo de reestruturação
@@ -37,6 +38,7 @@ O Bot Sinais é um sistema modular para:
 ### ⚙️ **[Setup e Configuração](./setup/)**
 - **[README.md](./setup/README.md)** - Índice de configuração e setup
 - **[SETUP_CONFIGURACAO.md](./setup/SETUP_CONFIGURACAO.md)** - Configuração geral do sistema
+- **[ESTRUTURA_RPA_INTEGRACAO.md](./setup/ESTRUTURA_RPA_INTEGRACAO.md)** - 🤖 **Integração com RPAs externos**
 - **[MASSTRANSIT_SETUP.md](./setup/MASSTRANSIT_SETUP.md)** - Configuração de mensageria
 - **[ORGANIZACAO_HTTP_FILES.md](./setup/ORGANIZACAO_HTTP_FILES.md)** - Organização de arquivos de teste HTTP
 

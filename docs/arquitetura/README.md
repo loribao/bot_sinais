@@ -26,6 +26,13 @@ Esta pasta contém documentação sobre a arquitetura, design e evolução estru
   - Configuração modular por contexto DDD
   - Benefícios e implementação atual
 
+### 📝 **Padrões e Organização**
+- **[ORGANIZACAO_EVENTOS.md](./ORGANIZACAO_EVENTOS.md)**
+  - Padrão de eventos em arquivos separados
+  - Convenções de nomenclatura
+  - Estrutura de diretórios
+  - Exemplos e checklist
+
 ### 🔄 **Evolução da Arquitetura**
 
 #### **Reorganização Modular**

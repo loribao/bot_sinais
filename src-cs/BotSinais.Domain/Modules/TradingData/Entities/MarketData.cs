@@ -1,9 +1,9 @@
-using BotSinais.Domain.Shared;
+using BotSinais.Domain.Shared.Entities;
 using BotSinais.Domain.Shared.Enums;
 using BotSinais.Domain.Shared.ValueObjects;
 using System.ComponentModel.DataAnnotations;
 
-namespace BotSinais.Domain.Modules.DataManagement.Entities;
+namespace BotSinais.Domain.Modules.TradingData.Entities;
 
 /// <summary>
 /// Entidade que representa dados de mercado (OHLCV)

@@ -1,4 +1,4 @@
-namespace BotSinais.Domain.Shared;
+namespace BotSinais.Domain.Shared.Interfaces;
 
 /// <summary>
 /// Interface base para comandos CQRS

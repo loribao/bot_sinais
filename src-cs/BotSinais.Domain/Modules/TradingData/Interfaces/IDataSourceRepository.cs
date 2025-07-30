@@ -1,6 +1,6 @@
-using BotSinais.Domain.Modules.DataManagement.Entities;
+using BotSinais.Domain.Modules.TradingData.Entities;
 
-namespace BotSinais.Domain.Modules.DataManagement.Interfaces;
+namespace BotSinais.Domain.Modules.TradingData.Interfaces;
 
 /// <summary>
 /// Interface para repositório de fontes de dados

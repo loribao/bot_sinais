@@ -1,4 +1,5 @@
 using BotSinais.Infrastructure.Shared;
+using BotSinais.ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 

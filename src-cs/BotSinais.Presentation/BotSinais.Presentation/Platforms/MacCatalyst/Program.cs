@@ -1,7 +1,7 @@
 ﻿using ObjCRuntime;
 using UIKit;
 
-namespace BotSinais.Presentation
+namespace BotSinais.Presentation.Platforms.MacCatalyst
 {
     public class Program
     {

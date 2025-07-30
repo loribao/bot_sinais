@@ -10,9 +10,10 @@ Este é um sistema de sinais de trading baseado em **Domain-Driven Design (DDD)*
 
 ### Contextos Delimitados
 
-1. **📊 DataManagement** - Gerenciamento de dados de mercado
-2. **📈 Signals** - Geração e execução de sinais de trading  
-3. **🔧 Strategies** - Criação e execução de estratégias (C#, Python, Julia)
+1. **📊 DataWarehouse** - Gerenciamento do mar de dados e integração com RPAs que depositam dados
+2. **📋 TradingData** - Disponibilização de dados para estratégias e sinais (consulta DataWarehouse)
+3. **📈 Signals** - Geração e execução de sinais de trading  
+4. **🔧 Strategies** - Criação e execução de estratégias (C#, Python, Julia)
 
 ### Tecnologias Principais
 - **.NET 9.0** (C#)
@@ -21,8 +22,15 @@ Este é um sistema de sinais de trading baseado em **Domain-Driven Design (DDD)*
 - **Entity Framework Core** (para persistência)
 - **ASP.NET Core** (APIs e Web)
 - **Keycloak** (autenticação e autorização)
-- **PostgreSQL** (banco de dados)
+- **PostgreSQL** (banco de dados relacional)
+- **MongoDB** (armazenamento de dados brutos do Data Warehouse)
 - **Python/Julia** (engines de estratégias)
+
+### Arquitetura de Dados
+- **PostgreSQL** - Entidades de domínio (RpaInstance, RpaConfiguration, etc.)
+- **MongoDB** - Dados brutos coletados pelos RPAs (market data, on-chain, etc.)
+- **RabbitMQ** - Mensageria entre Data Warehouse e RPAs
+- **Keycloak** - Autenticação e autorização centralizadas
 
 ### Arquitetura de Projetos
 - **BotSinais.AppHost** - .NET Aspire orchestrator (infraestrutura)
@@ -41,8 +49,10 @@ BotSinais.Domain.Shared                         // Classes base e tipos comparti
 BotSinais.Domain.Shared.Events                  // Eventos de domínio e interfaces
 BotSinais.Domain.Shared.ValueObjects            // Value Objects (Price, Volume, Symbol)
 BotSinais.Domain.Shared.Enums                   // Enumerações (InstrumentType, TimeFrame, etc.)
-BotSinais.Domain.Modules.DataManagement.Entities    // Entidades de dados
-BotSinais.Domain.Modules.DataManagement.Interfaces  // Interfaces de dados
+BotSinais.Domain.Modules.DataWarehouse.Entities    // Entidades do Data Warehouse (RPAs, configurações)
+BotSinais.Domain.Modules.DataWarehouse.Interfaces  // Interfaces do Data Warehouse
+BotSinais.Domain.Modules.TradingData.Entities    // Entidades de dados (Instruments, MarketData)
+BotSinais.Domain.Modules.TradingData.Interfaces  // Interfaces de dados
 BotSinais.Domain.Modules.Signals.Entities           // Entidades de sinais
 BotSinais.Domain.Modules.Signals.Interfaces         // Interfaces de sinais
 BotSinais.Domain.Modules.Strategies.Entities        // Entidades de estratégias
@@ -51,7 +61,8 @@ BotSinais.Domain.Modules.Strategies.Interfaces      // Interfaces de estratégia
 // INFRASTRUCTURE - Implementações organizadas por módulos
 BotSinais.Infrastructure.Modules.Auth                   // Autenticação Keycloak, middlewares, controllers
 BotSinais.Infrastructure.Modules.Signals                // Controllers de sinais, handlers MassTransit
-BotSinais.Infrastructure.Modules.DataManagement         // Entity Framework, repositórios, controllers de dados
+BotSinais.Infrastructure.Modules.DataWarehouse          // RPAs, MongoDB, Data Warehouse management
+BotSinais.Infrastructure.Modules.TradingData         // Entity Framework, repositórios, controllers de dados
 BotSinais.Infrastructure.Modules.Strategies             // Engines C#/Python/Julia, controllers de estratégias
 BotSinais.Infrastructure.Shared                         // Configurações unificadas de todos os módulos
 ```
@@ -62,21 +73,103 @@ BotSinais.Infrastructure.Shared                         // Configurações unifi
 - Use PascalCase
 - Nomes descritivos: `TradingSignal`, `MarketData`, `StrategyExecution`
 - Herdem de `BaseEntity` quando apropriado
+- **IMPORTANTE**: Cada Entidades deve estar em seu próprio arquivo
+- Um arquivo por Entidade: `DataSource.cs`, `DataSourceInstrument.cs`, `Instrument.cs`
 
 #### Value Objects
 - Use `record` quando possível
-- Exemplos: `Price`, `Volume`, `Symbol`
+- **IMPORTANTE**: Cada Value Object deve estar em seu próprio arquivo
+- Exemplos: `Price.cs`, `Volume.cs`, `Symbol.cs`, `MongoConfiguration.cs`
 - Inclua validação no construtor
+- Um arquivo por tipo: `DataQualityScore.cs`, `ProcessingPriority.cs`, `RpaProcessingStatus.cs`
 
 #### Eventos
-- Sufixo `Event`: `SignalGeneratedEvent`, `MarketDataReceivedEvent`
-- Herdem de `DomainEvent`
+- Use `record` quando possível
+- Sufixo `Event` para eventos: `SignalGeneratedEvent`, `MarketDataReceivedEvent`
+- Sufixo `Command` para comandos: `StartDataCollectionCommand`
+- Herdem de `DomainEvent` e implementem `EventType`
+- **IMPORTANTE**: Cada evento deve estar em seu próprio arquivo
+- Exemplos: `SignalGeneratedEvent.cs`, `DataAvailableEvent.cs`, `RpaRegisteredEvent.cs`
 - Use `record` para imutabilidade
+
+#### Padrão de Arquivos de Eventos
+```csharp
+// Arquivo: RpaRegisteredEvent.cs
+public record RpaRegisteredEvent : DomainEvent
+{
+    public Guid RpaInstanceId { get; init; }
+    public string Name { get; init; } = null!;
+    public RpaType Type { get; init; }
+    public DateTime RegisteredAt { get; init; }
+    
+    public override string EventType => "rpa.registered";
+}
+
+// Arquivo: RpaHeartbeatEvent.cs
+public record RpaHeartbeatEvent : DomainEvent
+{
+    public Guid RpaInstanceId { get; init; }
+    public RpaInstanceStatus Status { get; init; }
+    public int ActiveRequests { get; init; }
+    public DateTime Timestamp { get; init; }
+    
+    public override string EventType => "rpa.heartbeat";
+}
+```
 
 #### Interfaces
 - Prefixo `I`: `IStrategyRepository`, `ISignalExecutionService`
 - Repositórios: `I{Entity}Repository`
 - Serviços: `I{Domain}Service`
+
+## 🤖 Integração RPA - Data Warehouse
+
+### Responsabilidades por Módulo
+- **DataWarehouse** - Gerencia o "mar de dados" e RPAs que depositam dados
+  - Configuração e monitoramento de RPAs
+  - Coleta e armazenamento de dados brutos no MongoDB
+  - Controle de qualidade e processamento inicial
+  - Health check e heartbeat dos RPAs
+
+- **TradingData** - Disponibiliza dados para estratégias e sinais
+  - Consulta dados processados do DataWarehouse
+  - APIs de acesso a dados para trading
+  - Entidades de negócio (Instrument, MarketData)
+  - Repositórios para acesso estruturado aos dados
+
+### Entidades Principais do RPA
+- **RpaInstance** - Gerencia instâncias RPA (Online/Offline, Heartbeat, Capacidade)
+- **RpaConfiguration** - Configurações de coleta por RPA
+- **RpaHealthCheck** - Monitoramento de saúde e métricas
+- **RpaDataRequest** - Solicitações de coleta de dados
+- **RpaDataBatch** - Lotes de dados coletados
+
+### Eventos RPA (Arquivos Individuais)
+- **RpaRegisteredEvent.cs** - Nova instância registrada
+- **RpaHeartbeatEvent.cs** - Pulso de vida (30s)
+- **RpaHealthCheckEvent.cs** - Verificação de saúde (5min)
+- **RpaStatusChangedEvent.cs** - Mudança de status
+- **StartDataCollectionCommand.cs** - Comando para iniciar coleta
+- **DataAvailableEvent.cs** - Dados disponíveis no MongoDB
+
+### Value Objects RPA (Arquivos Individuais)
+- **MongoConfiguration.cs** - Configuração do MongoDB
+- **ApiConfiguration.cs** - Configuração de APIs externas
+- **DataQualityScore.cs** - Score de qualidade dos dados
+- **ProcessingPriority.cs** - Prioridade de processamento
+- **RpaProcessingStatus.cs** - Status de processamento
+
+### Serviços RPA
+- **IRpaInstanceManagementService** - CRUD de instâncias RPA
+- **IRpaMonitoringService** - Monitoramento e alertas
+- **IMongoDataAccessService** - Acesso aos dados no MongoDB
+
+### Enums RPA (Necessários)
+**IMPORTANTE**: Os seguintes enums devem ser criados para substituir as strings:
+- **RpaType** - Tipos de RPA (MarketData, OnChain, News, Social, Custom)
+- **RpaInstanceStatus** - Status da instância (Online, Offline, Busy, Error, Maintenance)
+- **DataCollectionStatus** - Status da coleta (Pending, Running, Completed, Failed)
+- **RpaHealthStatus** - Status de saúde (Healthy, Degraded, Unhealthy)
 
 ### Estrutura de Entidades
 
@@ -95,6 +188,30 @@ public class ExampleEntity : BaseEntity, IVersionedEntity
 ```
 
 ## 🔄 Padrões de Eventos
+
+### Estrutura de Eventos
+```csharp
+// CADA EVENTO EM SEU PRÓPRIO ARQUIVO
+// Arquivo: SignalGeneratedEvent.cs
+public record SignalGeneratedEvent : DomainEvent
+{
+    public override string EventType => "SignalGeneratedEvent";
+    
+    public Guid SignalId { get; init; }
+    public Guid InstrumentId { get; init; }
+    // ... outras propriedades
+}
+
+// Arquivo: DataAvailableEvent.cs
+public record DataAvailableEvent : DomainEvent
+{
+    public override string EventType => "DataAvailableEvent";
+    
+    public Guid RequestId { get; init; }
+    public string DatabaseName { get; init; } = null!;
+    // ... outras propriedades
+}
+```
 
 ### Publicação de Eventos
 ```csharp
@@ -148,7 +265,8 @@ BotSinais.Infrastructure/
 ├── Modules/
 │   ├── Auth/                    # Autenticação e autorização
 │   ├── Signals/                 # Sinais de trading  
-│   ├── DataManagement/          # Dados de mercado
+│   ├── DataWarehouse/           # Data Warehouse e RPAs
+│   ├── TradingData/          # Dados de mercado
 │   └── Strategies/              # Estratégias de trading
 └── Shared/                      # Configurações unificadas
 ```
@@ -188,7 +306,8 @@ public static IServiceCollection AddBotSinaisInfrastructure(this IServiceCollect
     // Todos os módulos
     services.AddAuthModule(configuration);
     services.AddSignalsModule(configuration);
-    services.AddDataManagementModule(configuration);
+    services.AddDataWarehouseModule(configuration);
+    services.AddTradingDataModule(configuration);
     services.AddStrategiesModule(configuration);
     
     return services;
@@ -358,19 +477,49 @@ src-cs/
 │   │       ├── DomainEvents.cs             # Definições dos eventos
 │   │       └── IDomainEventPublisher.cs    # Interface para publicação
 │   └── Modules/                            # Contextos delimitados (Bounded Contexts)
-│       ├── DataManagement/                 # Contexto de dados
+│       ├── DataWarehouse/                  # Contexto de Data Warehouse e RPAs
+│       │   ├── Entities/                   # Uma entidade por arquivo
+│       │   │   ├── RpaConfiguration.cs
+│       │   │   ├── RpaDataRequest.cs
+│       │   │   ├── RpaDataBatch.cs
+│       │   │   ├── RpaActivityLog.cs
+│       │   │   ├── RpaInstance.cs
+│       │   │   ├── RpaHealthCheck.cs
+│       │   │   └── ...
+│       │   ├── ValueObjects/               # Value Objects - um arquivo por tipo
+│       │   │   ├── MongoConfiguration.cs
+│       │   │   ├── ApiConfiguration.cs
+│       │   │   ├── DataQualityScore.cs
+│       │   │   ├── MongoDataReference.cs
+│       │   │   ├── ProcessingPriority.cs
+│       │   │   ├── RpaProcessingStatus.cs
+│       │   │   └── ...
+│       │   └── Interfaces/                 # Uma interface por arquivo
+│       │       ├── IRpaManagementService.cs
+│       │       ├── IRpaInstanceRepository.cs
+│       │       ├── IRpaMonitoringService.cs
+│       │       ├── IMongoDataAccessService.cs
+│       │       └── ...
+│       ├── TradingData/                 # Contexto de dados para estratégias/sinais
 │       │   ├── Entities/                   # Uma entidade por arquivo
 │       │   │   ├── Instrument.cs
 │       │   │   ├── MarketData.cs
+│       │   │   ├── DataSource.cs
+│       │   │   ├── TradingSession.cs
+│       │   │   └── ...
+│       │   ├── ValueObjects/               # Value Objects - um arquivo por tipo
 │       │   │   └── ...
 │       │   └── Interfaces/                 # Uma interface por arquivo
 │       │       ├── IInstrumentRepository.cs
 │       │       ├── IMarketDataRepository.cs
+│       │       ├── IDataSourceRepository.cs
 │       │       └── ...
 │       ├── Signals/                        # Contexto de sinais
 │       │   ├── Entities/                   # Uma entidade por arquivo
 │       │   │   ├── TradingSignal.cs
 │       │   │   ├── Portfolio.cs
+│       │   │   └── ...
+│       │   ├── ValueObjects/               # Value Objects - um arquivo por tipo
 │       │   │   └── ...
 │       │   └── Interfaces/                 # Uma interface por arquivo
 │       │       ├── ITradingSignalRepository.cs
@@ -380,6 +529,8 @@ src-cs/
 │           ├── Entities/                   # Uma entidade por arquivo
 │           │   ├── Strategy.cs
 │           │   ├── StrategyExecution.cs
+│           │   └── ...
+│           ├── ValueObjects/               # Value Objects - um arquivo por tipo
 │           │   └── ...
 │           └── Interfaces/                 # Uma interface por arquivo
 │               ├── IStrategyRepository.cs
@@ -445,7 +596,7 @@ public async Task<Result> ProcessAsync(ProcessRequest request)
 ### Ao Sugerir Código:
 1. **Sempre** considere o contexto de DDD e os bounded contexts
 2. **Use** .NET Aspire para orquestração de infraestrutura
-3. **Organize** por módulos seguindo contextos delimitados (Auth, Signals, DataManagement, Strategies)
+3. **Organize** por módulos seguindo contextos delimitados (Auth, Signals, DataWarehouse, TradingData, Strategies)
 4. **Centralize** configurações no módulo **Shared** para unificar tudo
 5. **Use** os padrões estabelecidos (Repository, Domain Events)
 6. **Inclua** logging e tratamento de erro apropriados

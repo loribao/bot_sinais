@@ -1,6 +1,7 @@
 using BotSinais.Presentation.Shared.Services;
 using BotSinais.Presentation.Web.Components;
 using BotSinais.Presentation.Web.Services;
+using BotSinais.ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 

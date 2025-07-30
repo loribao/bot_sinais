@@ -1,6 +1,6 @@
 ﻿using Foundation;
 
-namespace BotSinais.Presentation
+namespace BotSinais.Presentation.Platforms.MacCatalyst
 {
     [Register("AppDelegate")]
     public class AppDelegate : MauiUIApplicationDelegate

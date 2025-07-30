@@ -1,4 +1,4 @@
-using BotSinais.Domain.Shared;
+using BotSinais.Domain.Shared.Entities;
 using BotSinais.Domain.Shared.Enums;
 using BotSinais.Domain.Shared.ValueObjects;
 using System.ComponentModel.DataAnnotations;

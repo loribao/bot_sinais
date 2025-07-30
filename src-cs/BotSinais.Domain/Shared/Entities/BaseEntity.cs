@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BotSinais.Domain.Shared;
+namespace BotSinais.Domain.Shared.Entities;
 
 /// <summary>
 /// Classe base para todas as entidades do domínio

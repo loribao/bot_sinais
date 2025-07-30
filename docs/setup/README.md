@@ -18,7 +18,14 @@ Esta pasta contém documentação sobre configuração, setup e organização do
   - Configuração de consumers
   - Padrões de messaging
 
-### 🧪 **Testes HTTP**
+### � **Integração com RPAs**
+- **[ESTRUTURA_RPA_INTEGRACAO.md](./ESTRUTURA_RPA_INTEGRACAO.md)** - 🔥 **Estrutura para integração com RPAs externos**
+  - Protocolo de mensageria com RPAs
+  - Estrutura MongoDB padrão
+  - Especificações técnicas
+  - Casos de uso e exemplos
+
+### �🧪 **Testes HTTP**
 - **[ORGANIZACAO_HTTP_FILES.md](./ORGANIZACAO_HTTP_FILES.md)**
   - Organização dos arquivos .http
   - Padronização de testes
