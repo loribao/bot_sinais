@@ -5,7 +5,7 @@ Accept: application/json
 
 {
   "user": "usuario_teste",
-  "pass": "senha_teste"
+  "pass": "senhateste1R@"
 }
 ######
 get https://localhost:7365/openapi/v1.json

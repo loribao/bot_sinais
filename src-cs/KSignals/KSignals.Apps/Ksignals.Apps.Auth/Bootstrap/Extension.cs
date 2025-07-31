@@ -1,4 +1,5 @@
 ﻿using Ksignals.Apps.Auth.Core.Interfaces.IApplication.IUseCases;
+using Ksignals.Apps.Auth.Infra;
 using Ksignals.Apps.Auth.Web.Rest;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -8,7 +9,7 @@ using Microsoft.Extensions.Hosting;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
-
+using Ksignals.Apps.Auth.Core.Interfaces.IRepository;
 namespace Ksignals.Apps.Auth.Bootstrap;
 
 public static class Extensions
@@ -30,7 +31,8 @@ public static class Extensions
         // {
         //     options.AllowedSchemes = ["https"];
         // });
-        builder.Services.AddScoped<ILoginUserPassHandler,Application.UseCases.LoginUserPass.Handler>();
+        builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+        builder.Services.AddScoped<ILoginUserPassHandler, Application.UseCases.LoginUserPass.Handler>();
         return builder;
     }
 
