@@ -1,0 +1,11 @@
+@BotSignal.RPA.RealTimeQuote_HostAddress = http://localhost:5047
+
+GET {{BotSignal.RPA.RealTimeQuote_HostAddress}}/todos/
+Accept: application/json
+
+###
+
+GET {{BotSignal.RPA.RealTimeQuote_HostAddress}}/todos/1
+Accept: application/json
+
+###
