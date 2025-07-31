@@ -19,18 +19,17 @@ var signalsdb = postgres.AddDatabase("Signals");
 var dataManagementdb = postgres.AddDatabase("DataManagement");
 var strategiesdb = postgres.AddDatabase("Strategies");
 
-var apiService = builder.AddProject<Projects.KSignals_Infrastructure_ApiService>("apiservice")
-    .WithReference(rabbitmq)
-    .WithReference(signalsdb)
-    .WithReference(dataManagementdb)
-    .WithReference(strategiesdb)
-    .WithHttpHealthCheck("/health")
-    .WithReference(keycloak)
-    .WaitFor(keycloak);
+var apiService = builder.AddProject<Projects.KSignals_Infrastructure_ApiService>("apiservice");
+    //.WithReference(rabbitmq)
+    //.WithReference(signalsdb)
+    //.WithReference(dataManagementdb)
+    //.WithReference(strategiesdb)
+    //.WithHttpHealthCheck("/health")
+    //.WithReference(keycloak)
+    //.WaitFor(keycloak);
 
 
 var web = builder.AddProject<Projects.KSignals_Infrastructure_Web>("ksignals-infrastructure-web");
 var maui_web = builder.AddProject<Projects.KSignals_Presentation_Web>("ksignals-presentation-web");
-var maui = builder.AddProject<Projects.KSignals_Presentation>("ksignals-presentation")
-      .WithReference(maui_web);
+//var maui = builder.AddProject<Projects.KSignals_Presentation>("ksignals-presentation").WithReference(maui_web);
 builder.Build().Run();

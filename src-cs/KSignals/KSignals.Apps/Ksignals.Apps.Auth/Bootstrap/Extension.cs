@@ -1,4 +1,5 @@
-﻿using Ksignals.Apps.Auth.Web.Rest;
+﻿using Ksignals.Apps.Auth.Core.Interfaces.IApplication.IUseCases;
+using Ksignals.Apps.Auth.Web.Rest;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,7 +30,7 @@ public static class Extensions
         // {
         //     options.AllowedSchemes = ["https"];
         // });
-
+        builder.Services.AddScoped<ILoginUserPassHandler,Application.UseCases.LoginUserPass.Handler>();
         return builder;
     }
 

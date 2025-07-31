@@ -1,0 +1,15 @@
+### Teste de login de usuário (POST)
+POST https://localhost:7365/auth/login/user?
+Content-Type: application/json
+Accept: application/json
+
+{
+  "user": "usuario_teste",
+  "pass": "senha_teste"
+}
+######
+get https://localhost:7365/openapi/v1.json
+
+###
+POST https://localhost:7365/auth/login/user?user=usuario_teste&pass=senha_teste
+Accept: application/json
